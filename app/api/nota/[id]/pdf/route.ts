@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
-import path from "path";
+import PDFDocument from "pdfkit";
+import { prisma } from "@/lib/prisma";
+import { existsSync } from "fs";
+import { join } from "path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-import { prisma } from "@/lib/prisma";
-import { readFileSync } from "fs";
-import { join } from "path";
+
+const cm = 28.3464567;
 
 export async function GET(
   request: NextRequest,
@@ -27,23 +27,31 @@ export async function GET(
       return NextResponse.json({ error: "Nota not found" }, { status: 404 });
     }
 
-    let logoDataUrl = "";
-    try {
-      const logoPath = join(process.cwd(), "public", "logo-noBackground.png");
-      const logoBuffer = readFileSync(logoPath);
-      logoDataUrl = `data:image/png;base64,${logoBuffer.toString("base64")}`;
-    } catch {
-      logoDataUrl = "";
-    }
+    const pageWidth = 16.5 * cm;
+    const pageHeight = 21.6 * cm;
 
-    let tandaTanganBase64 = "";
-    try {
-      const tandaTanganPath = join(process.cwd(), "public", "tanda-tangan.png");
-      const tandaTanganBuffer = readFileSync(tandaTanganPath);
-      tandaTanganBase64 = tandaTanganBuffer.toString("base64");
-    } catch {
-      tandaTanganBase64 = "";
-    }
+    const doc = new PDFDocument({
+      size: [pageWidth, pageHeight],
+      margin: 0,
+    });
+
+    const chunks: Buffer[] = [];
+
+    doc.on("data", (chunk) => chunks.push(chunk));
+
+    const pdfBufferPromise = new Promise<Buffer>((resolve) => {
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+    });
+
+    const blue = "#1e40af";
+    const red = "#dc2626";
+    const black = "#111111";
+
+    const marginX = 0.9 * cm;
+    let y = 0.8 * cm;
+
+    const logoPath = join(process.cwd(), "public", "logo-noBackground.png");
+    const tandaTanganPath = join(process.cwd(), "public", "tanda-tangan.png");
 
     const formatRupiah = (amount: any) => {
       return `Rp ${Number(amount || 0).toLocaleString("id-ID")}`;
@@ -83,520 +91,367 @@ export async function GET(
       nota.tanggal
     ).getFullYear()}`;
 
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Nota Pembayaran</title>
+    // watermark
+    doc.save();
+    doc.opacity(0.04);
+    doc.rotate(-18, { origin: [pageWidth / 2, pageHeight / 2] });
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(32)
+      .fillColor(blue)
+      .text("✧  ◌  ✦  ◌  ✧  ◌  ✦  ◌  ✧", -10, 120, {
+        width: pageWidth + 100,
+        align: "center",
+      })
+      .text("◌  ✧  ◌  ✦  ◌  ✧  ◌  ✦  ◌", -10, 190, {
+        width: pageWidth + 100,
+        align: "center",
+      })
+      .text("✦  ◌  ✧  ◌  ✦  ◌  ✧  ◌  ✦", -10, 260, {
+        width: pageWidth + 100,
+        align: "center",
+      });
+    doc.restore();
 
-  <style>
-    @page {
-      size: 16.5cm 21.6cm;
-      margin: 0;
+    // header
+    if (existsSync(logoPath)) {
+      doc.image(logoPath, marginX, y, {
+        width: 3.5 * cm,
+      });
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(30)
+      .fillColor(blue)
+      .text("NOTA\nPEMBAYARAN", marginX, y, {
+        width: pageWidth - marginX * 2,
+        align: "right",
+        lineGap: -2,
+      });
 
-    body {
-      margin: 0;
-      padding: 0;
-      background: #ffffff;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #1e40af;
-    }
+    y += 2.15 * cm;
 
-    .nota-page {
-      width: 16.5cm;
-      height: 21.6cm;
-      padding: 0.8cm 0.9cm 0;
-      position: relative;
-      overflow: hidden;
-      background: #ffffff;
-    }
+    // divider
+    doc
+      .strokeColor(blue)
+      .lineWidth(2)
+      .moveTo(marginX, y)
+      .lineTo(pageWidth - marginX, y)
+      .stroke();
 
-    .watermark {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      opacity: 0.035;
-      font-size: 42px;
-      color: #1e40af;
-      line-height: 1.8;
-      transform: rotate(-18deg);
-      padding: 1cm;
-      pointer-events: none;
-      white-space: pre-wrap;
-    }
+    doc.circle(marginX, y, 3.5).fillColor(blue).fill();
+    doc.circle(pageWidth - marginX, y, 3.5).fillColor(blue).fill();
 
-    .content {
-      position: relative;
-      z-index: 1;
-    }
+    y += 0.45 * cm;
 
-    .header {
-      display: grid;
-      grid-template-columns: 3.7cm 1fr;
-      align-items: center;
-      column-gap: 0.5cm;
-      margin-bottom: 0.35cm;
-    }
+    // info
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(blue);
 
-    .logo-box img {
-      width: 3.5cm;
-      height: auto;
-      object-fit: contain;
-    }
+    const leftX = marginX;
+    const rightX = pageWidth / 2 + 0.35 * cm;
 
-    .title {
-      text-align: right;
-      font-size: 30px;
-      line-height: 1.05;
-      font-weight: 900;
-      letter-spacing: 1px;
-      color: #1e40af;
-      text-transform: uppercase;
-      padding-right: 0.05cm;
-    }
+    doc.text("No. Pembayaran", leftX, y);
+    doc.text(":", leftX + 2.5 * cm, y);
+    doc.fillColor(black).fontSize(8.5).text(nomorNotaLengkap, leftX + 2.8 * cm, y);
+    doc
+      .strokeColor(blue)
+      .lineWidth(0.6)
+      .moveTo(leftX + 2.8 * cm, y + 12)
+      .lineTo(pageWidth / 2 - 0.25 * cm, y + 12)
+      .stroke();
 
-    .divider {
-      height: 2px;
-      background: #1e40af;
-      margin: 0.08cm 0 0.45cm;
-      position: relative;
-    }
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(blue);
+    doc.text("Nama", rightX, y);
+    doc.text(":", rightX + 1.5 * cm, y);
+    doc.fillColor(black).fontSize(8.5).text(nota.kepadaYth, rightX + 1.8 * cm, y);
+    doc
+      .strokeColor(blue)
+      .moveTo(rightX + 1.8 * cm, y + 12)
+      .lineTo(pageWidth - marginX, y + 12)
+      .stroke();
 
-    .divider::before,
-    .divider::after {
-      content: "";
-      width: 7px;
-      height: 7px;
-      background: #1e40af;
-      border-radius: 50%;
-      position: absolute;
-      top: -2.5px;
-    }
+    y += 0.38 * cm;
 
-    .divider::before {
-      left: 0;
-    }
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(blue);
+    doc.text("Tanggal", rightX, y);
+    doc.text(":", rightX + 1.5 * cm, y);
+    doc.fillColor(black).fontSize(8.5).text(formatDate(nota.tanggal), rightX + 1.8 * cm, y);
+    doc
+      .strokeColor(blue)
+      .moveTo(rightX + 1.8 * cm, y + 12)
+      .lineTo(pageWidth - marginX, y + 12)
+      .stroke();
 
-    .divider::after {
-      right: 0;
-    }
+    y += 0.38 * cm;
 
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      column-gap: 0.8cm;
-      margin-bottom: 0.45cm;
-      font-size: 10px;
-      font-weight: 700;
-      color: #1e40af;
-    }
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(blue);
+    doc.text("No. Telp", rightX, y);
+    doc.text(":", rightX + 1.5 * cm, y);
+    doc
+      .strokeColor(blue)
+      .moveTo(rightX + 1.8 * cm, y + 12)
+      .lineTo(pageWidth - marginX, y + 12)
+      .stroke();
 
-    .info-row {
-      display: grid;
-      grid-template-columns: 2.5cm 0.2cm 1fr;
-      align-items: center;
-      margin-bottom: 0.18cm;
-    }
+    y += 0.55 * cm;
 
-    .info-right .info-row {
-      grid-template-columns: 1.5cm 0.2cm 1fr;
-    }
+    // table
+    const tableX = marginX;
+    const tableW = pageWidth - marginX * 2;
+    const col = {
+      no: 0.8 * cm,
+      qty: 1.3 * cm,
+      harga: 2.45 * cm,
+      total: 2.45 * cm,
+    };
+    const descW = tableW - col.no - col.qty - col.harga - col.total;
+    const rowH = 0.62 * cm;
 
-    .line {
-      border-bottom: 1px dotted #1e40af;
-      min-height: 13px;
-      color: #111;
-      font-weight: 700;
-      padding-left: 3px;
-      font-size: 8.5px;
-      line-height: 1.05;
-    }
+    const drawCell = (
+      x: number,
+      yPos: number,
+      w: number,
+      h: number,
+      text: string,
+      options?: { align?: "left" | "center" | "right"; fill?: string; color?: string; bold?: boolean }
+    ) => {
+      if (options?.fill) {
+        doc.rect(x, yPos, w, h).fill(options.fill);
+      }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+      doc.rect(x, yPos, w, h).strokeColor(blue).lineWidth(1).stroke();
 
-    .items-table {
-      margin-top: 0.12cm;
-      border: 1.5px solid #1e40af;
-    }
+      doc
+        .font(options?.bold ? "Helvetica-Bold" : "Helvetica")
+        .fontSize(options?.bold ? 10 : 8)
+        .fillColor(options?.color || black)
+        .text(text, x + 4, yPos + 7, {
+          width: w - 8,
+          align: options?.align || "left",
+        });
+    };
 
-    .items-table th {
-      background: #1e40af;
-      color: white;
-      border: 1.5px solid #1e40af;
-      padding: 7px 5px;
-      font-size: 10px;
-      text-align: center;
-      font-weight: 800;
-    }
+    let x = tableX;
 
-    .items-table td {
-      border: 1.2px solid #1e40af;
-      padding: 4px 5px;
-      font-size: 8px;
-      color: #111;
-      height: 23px;
-      vertical-align: top;
-    }
+    drawCell(x, y, col.no, rowH, "No", {
+      align: "center",
+      fill: blue,
+      color: "#ffffff",
+      bold: true,
+    });
+    x += col.no;
 
-    .items-table .no {
-      width: 0.8cm;
-      text-align: center;
-      font-weight: 700;
-      color: #1e40af;
-    }
+    drawCell(x, y, descW, rowH, "Deskripsi", {
+      align: "center",
+      fill: blue,
+      color: "#ffffff",
+      bold: true,
+    });
+    x += descW;
 
-    .items-table .desc {
-      width: auto;
-    }
+    drawCell(x, y, col.qty, rowH, "Jumlah", {
+      align: "center",
+      fill: blue,
+      color: "#ffffff",
+      bold: true,
+    });
+    x += col.qty;
 
-    .items-table .qty {
-      width: 1.3cm;
-      text-align: center;
-    }
+    drawCell(x, y, col.harga, rowH, "Harga", {
+      align: "center",
+      fill: blue,
+      color: "#ffffff",
+      bold: true,
+    });
+    x += col.harga;
 
-    .items-table .harga,
-    .items-table .jumlah {
-      width: 2.45cm;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .middle-section {
-      display: grid;
-      grid-template-columns: 1fr 6.55cm;
-      column-gap: 0.5cm;
-      margin-top: 0.25cm;
-      align-items: start;
-    }
-
-    .thanks {
-      font-size: 20px;
-      line-height: 1.18;
-      font-weight: 900;
-      color: #1e40af;
-      text-transform: uppercase;
-      padding-top: 0.35cm;
-    }
-
-    .summary-table {
-      border: 1.5px solid #1e40af;
-    }
-
-    .summary-table td {
-      border: 1.2px solid #1e40af;
-      height: 0.7cm;
-      font-size: 9px;
-      font-weight: 800;
-      padding: 5px 8px;
-    }
-
-    .summary-label {
-      width: 2.45cm;
-      background: #1e40af;
-      color: white;
-    }
-
-    .summary-value {
-      text-align: right;
-      color: #111;
-      white-space: nowrap;
-    }
-
-    .summary-sisa .summary-label {
-      background: #dc2626;
-    }
-
-    .summary-sisa .summary-value {
-      color: #dc2626;
-      border-color: #dc2626;
-    }
-
-    .signature-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      column-gap: 1.2cm;
-      margin-top: 0.5cm;
-      text-align: center;
-      color: #1e40af;
-      font-size: 10px;
-      font-weight: 600;
-    }
-
-    .signature-title {
-      margin-bottom: 0.12cm;
-    }
-
-    .signature-img {
-      height: 0.9cm;
-      width: 2.8cm;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto;
-    }
-
-    .signature-space {
-      height: 0.9cm;
-    }
-
-    .signature-name {
-      display: inline-block;
-      min-width: 4.2cm;
-      border-bottom: 1.5px dotted #1e40af;
-      padding-bottom: 2px;
-      color: #1e40af;
-      font-weight: 800;
-    }
-
-    .signature-position {
-      display: block;
-      margin-top: 3px;
-      font-size: 8px;
-      font-weight: 700;
-      color: #1e40af;
-    }
-
-    .footer {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 1cm;
-      background: #1e40af;
-      color: white;
-      display: grid;
-      grid-template-columns: 1fr 1.4fr;
-      align-items: center;
-      padding: 0 0.9cm;
-      font-size: 9px;
-      font-weight: 600;
-      z-index: 2;
-    }
-
-    .footer div:first-child {
-      text-align: left;
-      padding-left: 0;
-    }
-
-    .footer div:last-child {
-      text-align: center;
-      line-height: 1.2;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="nota-page">
-    <div class="watermark">
-      ✧  ◌  ✦  ◌  ✧  ◌  ✦  ◌  ✧  ◌  ✦
-      ◌  ✧  ◌  ✦  ◌  ✧  ◌  ✦  ◌  ✧
-      ✦  ◌  ✧  ◌  ✦  ◌  ✧  ◌  ✦
-      ◌  ✦  ◌  ✧  ◌  ✦  ◌  ✧  ◌
-    </div>
-
-    <div class="content">
-      <div class="header">
-        <div class="logo-box">
-          ${logoDataUrl ? `<img src="${logoDataUrl}" />` : ""}
-        </div>
-
-        <div class="title">
-          NOTA<br />
-          PEMBAYARAN
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="info-grid">
-        <div>
-          <div class="info-row">
-            <div>No. Pembayaran</div>
-            <div>:</div>
-            <div class="line">${nomorNotaLengkap}</div>
-          </div>
-        </div>
-
-        <div class="info-right">
-          <div class="info-row">
-            <div>Nama</div>
-            <div>:</div>
-            <div class="line">${nota.kepadaYth}</div>
-          </div>
-
-          <div class="info-row">
-            <div>Tanggal</div>
-            <div>:</div>
-            <div class="line">${formatDate(nota.tanggal)}</div>
-          </div>
-
-          <div class="info-row">
-            <div>No. Telp</div>
-            <div>:</div>
-            <div class="line">&nbsp;</div>
-          </div>
-        </div>
-      </div>
-
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Deskripsi</th>
-            <th>Jumlah</th>
-            <th>Harga</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          ${nota.items
-            .map(
-              (item) => `
-                <tr>
-                  <td class="no">${item.no}</td>
-                  <td class="desc">${item.jenisBarang}</td>
-                  <td class="qty">${item.qty}</td>
-                  <td class="harga">${formatRupiah(item.harga)}</td>
-                  <td class="jumlah">${formatRupiah(item.jumlah)}</td>
-                </tr>
-              `
-            )
-            .join("")}
-
-          ${Array.from({ length: Math.max(0, 10 - nota.items.length) })
-            .map(
-              (_, index) => `
-                <tr>
-                  <td class="no">${nota.items.length + index + 1}</td>
-                  <td class="desc"></td>
-                  <td class="qty"></td>
-                  <td class="harga"></td>
-                  <td class="jumlah"></td>
-                </tr>
-              `
-            )
-            .join("")}
-        </tbody>
-      </table>
-
-      <div class="middle-section">
-        <div class="thanks">
-          TERIMA KASIH<br />
-          ATAS KUNJUNGAN<br />
-          ANDA.
-        </div>
-
-        <table class="summary-table">
-          <tr>
-            <td class="summary-label">Total</td>
-            <td class="summary-value">${formatRupiah(nota.total)}</td>
-          </tr>
-
-          <tr>
-            <td class="summary-label">DP</td>
-            <td class="summary-value">${formatRupiah(nota.dp)}</td>
-          </tr>
-
-          <tr class="summary-sisa">
-            <td class="summary-label">Sisa</td>
-            <td class="summary-value">${formatRupiah(nota.sisa)}</td>
-          </tr>
-        </table>
-      </div>
-
-      <div class="signature-section">
-        <div>
-          <div class="signature-title">Tanda Terima,</div>
-          <div class="signature-space"></div>
-          <div class="signature-name">&nbsp;</div>
-        </div>
-
-        <div>
-          <div class="signature-title">Hormat Kami,</div>
-          ${
-            tandaTanganBase64
-              ? `<img class="signature-img" src="data:image/png;base64,${tandaTanganBase64}" />`
-              : `<div class="signature-space"></div>`
-          }
-          <div class="signature-name">Samsir</div>
-          <span class="signature-position">Direktur</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="footer">
-      <div>☎ 0811 779 969</div>
-      <div>Ruko Central Legenda Point Blok I Batam Centre - Batam</div>
-    </div>
-  </div>
-</body>
-</html>
-    `;
-
-    chromium.setGraphicsMode = false;
-
-    const executablePath = await chromium.executablePath();
-    process.env.LD_LIBRARY_PATH = path.dirname(executablePath);
-
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      executablePath,
-      headless: true,
+    drawCell(x, y, col.total, rowH, "Total", {
+      align: "center",
+      fill: blue,
+      color: "#ffffff",
+      bold: true,
     });
 
-    const page = await browser.newPage();
+    y += rowH;
 
-    await page.setViewport({
-      width: 794,
-      height: 1123,
-      deviceScaleFactor: 2,
+    const rows = [
+      ...nota.items,
+      ...Array.from({ length: Math.max(0, 10 - nota.items.length) }).map(
+        (_, index) => ({
+          no: nota.items.length + index + 1,
+          jenisBarang: "",
+          qty: "",
+          harga: "",
+          jumlah: "",
+        })
+      ),
+    ];
+
+    rows.forEach((item: any) => {
+      x = tableX;
+
+      drawCell(x, y, col.no, rowH, String(item.no || ""), {
+        align: "center",
+        color: blue,
+        bold: true,
+      });
+      x += col.no;
+
+      drawCell(x, y, descW, rowH, item.jenisBarang || "");
+      x += descW;
+
+      drawCell(x, y, col.qty, rowH, item.qty ? String(item.qty) : "", {
+        align: "center",
+      });
+      x += col.qty;
+
+      drawCell(x, y, col.harga, rowH, item.harga ? formatRupiah(item.harga) : "", {
+        align: "right",
+      });
+      x += col.harga;
+
+      drawCell(x, y, col.total, rowH, item.jumlah ? formatRupiah(item.jumlah) : "", {
+        align: "right",
+      });
+
+      y += rowH;
     });
 
-    await page.setContent(html, {
-      waitUntil: "load",
+    y += 0.35 * cm;
+
+    // thanks + summary
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(20)
+      .fillColor(blue)
+      .text("TERIMA KASIH\nATAS KUNJUNGAN\nANDA.", marginX, y + 0.3 * cm, {
+        width: 6.2 * cm,
+        lineGap: 0,
+      });
+
+    const summaryX = pageWidth - marginX - 6.55 * cm;
+    const summaryLabelW = 2.45 * cm;
+    const summaryValueW = 4.1 * cm;
+    const summaryH = 0.7 * cm;
+
+    const drawSummary = (label: string, value: string, yPos: number, danger = false) => {
+      drawCell(summaryX, yPos, summaryLabelW, summaryH, label, {
+        fill: danger ? red : blue,
+        color: "#ffffff",
+        bold: true,
+      });
+
+      drawCell(summaryX + summaryLabelW, yPos, summaryValueW, summaryH, value, {
+        align: "right",
+        color: danger ? red : black,
+        bold: true,
+      });
+    };
+
+    drawSummary("Total", formatRupiah(nota.total), y);
+    drawSummary("DP", formatRupiah(nota.dp), y + summaryH);
+    drawSummary("Sisa", formatRupiah(nota.sisa), y + summaryH * 2, true);
+
+    y += 2.45 * cm;
+
+    // signature
+    const sigY = y;
+    const sigLeftX = marginX + 1 * cm;
+    const sigRightX = pageWidth / 2 + 1.1 * cm;
+
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(blue);
+
+    doc.text("Tanda Terima,", sigLeftX, sigY, {
+      width: 4.2 * cm,
+      align: "center",
     });
 
-    const pdfBuffer = await page.pdf({
-      width: "16.5cm",
-      height: "21.6cm",
-      printBackground: true,
-      preferCSSPageSize: true,
-      margin: {
-        top: "0",
-        right: "0",
-        bottom: "0",
-        left: "0",
-      },
+    doc.text("Hormat Kami,", sigRightX, sigY, {
+      width: 4.2 * cm,
+      align: "center",
     });
 
-    await browser.close();
+    if (existsSync(tandaTanganPath)) {
+      doc.image(tandaTanganPath, sigRightX + 0.75 * cm, sigY + 0.35 * cm, {
+        width: 2.8 * cm,
+      });
+    }
+
+    doc
+      .strokeColor(blue)
+      .lineWidth(1)
+      .moveTo(sigLeftX, sigY + 1.55 * cm)
+      .lineTo(sigLeftX + 4.2 * cm, sigY + 1.55 * cm)
+      .stroke();
+
+    doc
+      .moveTo(sigRightX, sigY + 1.55 * cm)
+      .lineTo(sigRightX + 4.2 * cm, sigY + 1.55 * cm)
+      .stroke();
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(10)
+      .fillColor(blue)
+      .text("Samsir", sigRightX, sigY + 1.6 * cm, {
+        width: 4.2 * cm,
+        align: "center",
+      });
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .text("Direktur", sigRightX, sigY + 1.95 * cm, {
+        width: 4.2 * cm,
+        align: "center",
+      });
+
+    // footer
+    const footerH = 1 * cm;
+    doc.rect(0, pageHeight - footerH, pageWidth, footerH).fill(blue);
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .fillColor("#ffffff")
+      .text("☎ 0811 779 969", marginX, pageHeight - footerH + 10, {
+        width: 6.2 * cm,
+        align: "left",
+      });
+
+    doc.text(
+      "Ruko Central Legenda Point Blok I Batam Centre - Batam",
+      pageWidth / 2 - 0.3 * cm,
+      pageHeight - footerH + 10,
+      {
+        width: pageWidth / 2,
+        align: "center",
+      }
+    );
+
+    doc.end();
+
+    const pdfBuffer = await pdfBufferPromise;
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="Nota-${nomorNotaLengkap}.pdf"`,
+        "Content-Disposition": `inline; filename="Nota-${String(
+          nota.nomorNota
+        ).padStart(4, "0")}.pdf"`,
       },
     });
   } catch (error: any) {
-      console.error("Error generating PDF:", error);
-      console.error("PDF ERROR STACK:", error?.stack);
+    console.error("Error generating PDF:", error);
 
-      return NextResponse.json(
-        {
-          error: "Failed to generate PDF",
-          message: error?.message,
-          stack: error?.stack,
-        },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json(
+      {
+        error: "Failed to generate PDF",
+        message: error?.message,
+        stack: error?.stack,
+      },
+      { status: 500 }
+    );
+  }
 }
