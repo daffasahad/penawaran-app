@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium-min";
+import chromium from "@sparticuz/chromium";
+import path from "path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -541,11 +542,14 @@ export async function GET(
 </html>
     `;
 
+    chromium.setGraphicsMode = false;
+
+    const executablePath = await chromium.executablePath();
+    process.env.LD_LIBRARY_PATH = path.dirname(executablePath);
+
     const browser = await puppeteer.launch({
       args: chromium.args,
-      executablePath: await chromium.executablePath(
-        "https://github.com/Sparticuz/chromium/releases/download/v123.0.1/chromium-v123.0.1-pack.tar"
-      ),
+      executablePath,
       headless: true,
     });
 
