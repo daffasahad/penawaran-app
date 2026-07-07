@@ -5,6 +5,8 @@ const nextConfig = {
       root: import.meta.dirname,
     },
   },
+
+  serverExternalPackages: ["@sparticuz/chromium"],
 };
 
 export default nextConfig;
