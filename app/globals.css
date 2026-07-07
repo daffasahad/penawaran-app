@@ -1,17 +1,27 @@
 @import "tailwindcss";
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ====== Warna dasar (light mode) ====== */
 :root {
-  --background: #ffffff;
+  --background: #eeeeee;
   --foreground: #171717;
 }
 
+/* ====== Mapping ke Tailwind & font ====== */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: #777c6d;
+  --color-secondary: #b7b89f;
+  --color-muted: #cbcbcb;
+  --color-light: #eeeeee;
+  --font-sans: var(--font-poppins);
 }
 
+/* ====== Dark mode ====== */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -19,8 +29,156 @@
   }
 }
 
+/* ====== Body global ====== */
 body {
+  min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins), sans-serif;
+}
+
+/* ========================================================= */
+/* ====== WARNA INPUT (UPDATED SESUAI PERMINTAAN USER) ===== */
+/* ========================================================= */
+
+/* Placeholder (warna sebelum diisi) */
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important; /* abu-abu elegan */
+  opacity: 1 !important;
+}
+
+/* Teks saat user mengisi */
+input,
+textarea,
+select {
+  color: #000 !important; /* hitam */
+}
+
+/* ====== Placeholder khusus input date ====== */
+input[type="date"] {
+  color: #000 !important; /* teks hitam setelah diisi */
+}
+
+input[type="date"]::-webkit-datetime-edit {
+  color: #000 !important;
+}
+
+input[type="date"]::-webkit-input-placeholder,
+input[type="date"]::placeholder {
+  color: #9ca3af !important; /* placeholder abu */
+  opacity: 1 !important;
+}
+
+/* ====== END OF INPUT COLOR FIX ====== */
+
+
+/* ====== Container print generik ====== */
+.print-container {
+  background: #ffffff !important;
+  width: 210mm; /* A4 */
+  min-height: 297mm;
+  padding: 15mm;
+  margin: 0 auto;
+  box-shadow: none !important;
+}
+
+/* ====== KERTAS PRINT PENAWARAN (HTML Preview) ====== */
+.print-page {
+  width: 210mm;
+  min-height: 297mm;
+  background: #ffffff;
+  margin: 0 auto;
+  padding: 12mm 15mm;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
+}
+
+/* ====== Tabel standar ====== */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+}
+th,
+td {
+  border: 1px solid #000;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+/* ====== PRINT MODE ====== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-container {
+    background: #ffffff !important;
+    margin: 0;
+    padding: 12mm 15mm !important;
+    width: 100%;
+    min-height: 100%;
+  }
+
+  .print-page {
+    box-shadow: none !important;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 12mm 15mm !important;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+    margin: 0 auto !important;
+  }
+
+  /* Semua teks hitam saat print */
+  .print-page * {
+    color: #000 !important;
+    text-shadow: none !important;
+  }
+
+  /* Sembunyikan elemen non-print */
+  .print\:hidden,
+  button,
+  nav,
+  header,
+  footer {
+    display: none !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100%;
+  }
+
+  th,
+  td {
+    border: 1px solid #000 !important;
+    padding: 6px 10px !important;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
 }

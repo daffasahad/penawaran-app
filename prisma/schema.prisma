@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Quotation {
+  id         Int             @id @default(autoincrement())
+  nomor      String          @unique
+  tanggal    DateTime
+  kepadaYth  String
+  lampiran   String          @default("-")
+
+  // Items dalam penawaran
+  items      QuotationItem[]
+
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model QuotationItem {
+  id           Int         @id @default(autoincrement())
+
+  // Relasi ke quotation
+  quotationId  Int
+  quotation    Quotation   @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+
+  // Data item
+  deskripsi    String
+  ukuran       String      @default("")
+  keterangan   String      @default("")
+
+  // Harga dan jumlah
+  harga        Float
+  pcs          Int
+  total        Float
+
+  // Opsional, jika Anda ingin: createdAt / updatedAt
+  // createdAt   DateTime @default(now())
+  // updatedAt   DateTime @updatedAt
+}
+
+model Nota {
+  id            String     @id @default(cuid())
+  nomorNota     Int        @unique @default(autoincrement()) // Mulai dari 0
+  tanggal       DateTime   @default(now())
+  kepadaYth     String
+  noTelp        String
+  
+  items         NotaItem[]
+  
+  total         Decimal    @default(0) @db.Decimal(15,2)
+  dp            Decimal    @default(0) @db.Decimal(15,2)
+  sisa          Decimal    @default(0) @db.Decimal(15,2)
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model NotaItem {
+  id           String  @id @default(cuid())
+  notaId       String
+  nota         Nota    @relation(fields: [notaId], references: [id], onDelete: Cascade)
+  
+  no           Int
+  jenisBarang  String
+  qty          Int
+  harga        Decimal @db.Decimal(15,2)
+  jumlah       Decimal @db.Decimal(15,2)
+  
+  @@index([notaId])
+}
