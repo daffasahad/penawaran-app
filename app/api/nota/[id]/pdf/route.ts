@@ -580,12 +580,17 @@ export async function GET(
         "Content-Disposition": `inline; filename="Nota-${nomorNotaLengkap}.pdf"`,
       },
     });
-  } catch (error) {
-    console.error("Error generating PDF:", error);
+  } catch (error: any) {
+      console.error("Error generating PDF:", error);
+      console.error("PDF ERROR STACK:", error?.stack);
 
-    return NextResponse.json(
-      { error: "Failed to generate PDF" },
-      { status: 500 }
-    );
-  }
+      return NextResponse.json(
+        {
+          error: "Failed to generate PDF",
+          message: error?.message,
+          stack: error?.stack,
+        },
+        { status: 500 }
+      );
+    }
 }
