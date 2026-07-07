@@ -7,6 +7,12 @@ const nextConfig = {
   },
 
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+
+  outputFileTracingIncludes: {
+    "/api/nota/[id]/pdf": [
+      "./node_modules/@sparticuz/chromium/bin/**/*",
+    ],
+  },
 };
 
 export default nextConfig;
