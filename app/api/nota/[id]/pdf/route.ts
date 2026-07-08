@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   page: {
     width: "16.5cm",
     height: "21.6cm",
-    paddingTop: 22,
+    paddingTop: 14,        // was 22
     paddingHorizontal: 26,
     paddingBottom: 0,
     fontFamily: "Helvetica",
@@ -101,35 +101,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 8,
+    marginBottom: 4,        // was 8
   },
 
   logo: {
-    width: 100,
-    height: 48,
+    width: 85,             // was 100
+    height: 40,             // was 48
     objectFit: "contain",
   },
 
   title: {
-    fontSize: 30,
+    fontSize: 18,           // was 30
     fontWeight: "bold",
     color: BLUE,
     textAlign: "right",
     lineHeight: 1.05,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
 
   divider: {
     borderBottomWidth: 2,
     borderBottomColor: BLUE,
-    marginTop: 4,
-    marginBottom: 14,
+    marginTop: 2,            // was 4
+    marginBottom: 6,         // was 14
   },
 
   infoContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 14,
+    marginBottom: 6,         // was 14
   },
 
   infoLeft: {
@@ -143,57 +143,57 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 3,         // was 6
   },
 
   infoLabelLeft: {
     width: 82,
-    fontSize: 9,
+    fontSize: 8,             // was 9
     fontWeight: "bold",
     color: BLUE,
   },
 
   infoLabelRight: {
     width: 52,
-    fontSize: 9,
+    fontSize: 8,             // was 9
     fontWeight: "bold",
     color: BLUE,
   },
 
   infoColon: {
     width: 8,
-    fontSize: 9,
+    fontSize: 8,
     color: BLUE,
   },
 
   infoValue: {
     flex: 1,
-    fontSize: 8,
+    fontSize: 7.5,           // was 8
     color: "#111111",
     fontWeight: "bold",
     borderBottomWidth: 1,
     borderBottomColor: BLUE,
     borderStyle: "dotted",
-    paddingBottom: 2,
+    paddingBottom: 1,        // was 2
   },
 
   table: {
     width: "100%",
     borderWidth: 1,
     borderColor: BLUE,
-    marginTop: 6,
+    marginTop: 2,            // was 6
   },
 
   tableHeader: {
     flexDirection: "row",
     backgroundColor: BLUE,
-    minHeight: 24,
+    minHeight: 16,           // was 24
     alignItems: "center",
   },
 
   tableRow: {
     flexDirection: "row",
-    minHeight: 23,
+    minHeight: 15,           // was 23
     borderBottomWidth: 1,
     borderBottomColor: BLUE,
     alignItems: "center",
@@ -201,9 +201,9 @@ const styles = StyleSheet.create({
 
   th: {
     color: "#ffffff",
-    fontSize: 9,
+    fontSize: 8,             // was 9
     fontWeight: "bold",
-    paddingVertical: 6,
+    paddingVertical: 3,      // was 6
     paddingHorizontal: 4,
     textAlign: "center",
     borderRightWidth: 1,
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
   },
 
   td: {
-    fontSize: 7.5,
+    fontSize: 7,             // was 7.5
     color: "#111111",
-    paddingVertical: 5,
+    paddingVertical: 2,      // was 5
     paddingHorizontal: 4,
     borderRightWidth: 1,
     borderRightColor: BLUE,
@@ -247,17 +247,17 @@ const styles = StyleSheet.create({
   middleSection: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
+    marginTop: 6,            // was 8
   },
 
   thanks: {
     width: "45%",
     color: BLUE,
-    fontSize: 20,
+    fontSize: 12,            // was 20
     lineHeight: 1.15,
     fontWeight: "bold",
     textTransform: "uppercase",
-    marginTop: 12,
+    marginTop: 4,            // was 12
   },
 
   summary: {
@@ -268,23 +268,23 @@ const styles = StyleSheet.create({
 
   summaryRow: {
     flexDirection: "row",
-    minHeight: 26,
+    minHeight: 18,           // was 26
     borderBottomWidth: 1,
     borderBottomColor: BLUE,
   },
 
   summaryRowLast: {
     flexDirection: "row",
-    minHeight: 26,
+    minHeight: 18,           // was 26
   },
 
   summaryLabel: {
     width: "40%",
     backgroundColor: BLUE,
     color: "#ffffff",
-    fontSize: 8.5,
+    fontSize: 7.5,           // was 8.5
     fontWeight: "bold",
-    paddingVertical: 8,
+    paddingVertical: 4,      // was 8
     paddingHorizontal: 8,
   },
 
@@ -292,36 +292,36 @@ const styles = StyleSheet.create({
     width: "40%",
     backgroundColor: RED,
     color: "#ffffff",
-    fontSize: 8.5,
+    fontSize: 7.5,           // was 8.5
     fontWeight: "bold",
-    paddingVertical: 8,
+    paddingVertical: 4,      // was 8
     paddingHorizontal: 8,
   },
 
   summaryValue: {
     width: "60%",
     color: "#111111",
-    fontSize: 8.5,
+    fontSize: 7.5,           // was 8.5
     fontWeight: "bold",
     textAlign: "right",
-    paddingVertical: 8,
+    paddingVertical: 4,      // was 8
     paddingHorizontal: 8,
   },
 
   summaryValueRed: {
     width: "60%",
     color: RED,
-    fontSize: 8.5,
+    fontSize: 7.5,           // was 8.5
     fontWeight: "bold",
     textAlign: "right",
-    paddingVertical: 8,
+    paddingVertical: 4,      // was 8
     paddingHorizontal: 8,
   },
 
   signatureSection: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 22,
+    marginTop: 10,           // was 22
     paddingHorizontal: 30,
   },
 
@@ -331,20 +331,21 @@ const styles = StyleSheet.create({
   },
 
   signatureTitle: {
-    fontSize: 8,
+    fontSize: 7.5,           // was 8
     fontWeight: "bold",
     color: BLUE,
-    marginBottom: 8,
+    marginBottom: 10,         // was 8
   },
 
   signatureSpace: {
-    height: 38,
+    height: 34,              // was 38
   },
 
   signatureImage: {
-    width: 80,
-    height: 38,
+    width: 800,               // was 80
+    height: 32,              // was 38
     objectFit: "contain",
+    marginBottom: "2",
   },
 
   signatureLine: {
@@ -357,18 +358,18 @@ const styles = StyleSheet.create({
   },
 
   signatureName: {
-    fontSize: 8,
+    fontSize: 7.5,           // was 8
     fontWeight: "bold",
     color: BLUE,
     textAlign: "center",
   },
 
   signatureRole: {
-    fontSize: 7,
+    fontSize: 7,             // unchanged
     fontWeight: "bold",
     color: BLUE,
     textAlign: "center",
-    marginTop: 2,
+    marginTop: 1,            // was 2
   },
 
   footer: {
@@ -376,7 +377,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 28,
+    height: 22,              // was 28
     backgroundColor: BLUE,
     color: "#ffffff",
     flexDirection: "row",
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
 
   footerPhone: {
     width: "40%",
-    fontSize: 8,
+    fontSize: 7.5,           // was 8
     fontWeight: "bold",
     color: "#ffffff",
     textAlign: "left",
@@ -394,7 +395,7 @@ const styles = StyleSheet.create({
 
   footerAddress: {
     width: "60%",
-    fontSize: 8,
+    fontSize: 7.5,           // was 8
     fontWeight: "bold",
     color: "#ffffff",
     textAlign: "center",
@@ -404,18 +405,7 @@ const styles = StyleSheet.create({
 function NotaPDF({ nota }: { nota: any }) {
   const nomorNotaLengkap = getNomorNotaLengkap(nota);
 
-  const rows = [
-    ...nota.items,
-    ...Array.from({
-      length: Math.max(0, 10 - nota.items.length),
-    }).map((_, index) => ({
-      no: nota.items.length + index + 1,
-      jenisBarang: "",
-      qty: "",
-      harga: "",
-      jumlah: "",
-    })),
-  ];
+  const rows = nota.items;
 
   return h(
     Document,
